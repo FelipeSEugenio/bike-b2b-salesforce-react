@@ -1,4 +1,6 @@
 import React from 'react';
+import AccountLookup from '@/components/account/AccountLookup';
+import { AccountSummary } from '@/services/accountService';
 
 export type DraftOrderItem = {
   bikeId: string;
@@ -15,8 +17,8 @@ interface DraftOrderSidebarProps {
   onRemoveItem: (bikeId: string) => void;
   totalQuantity: number;
   totalAmount: number;
-  accountId: string;
-  onAccountIdChange: (value: string) => void;
+  selectedAccount: AccountSummary | null;
+  onAccountChange: (account: AccountSummary | null) => void;
   onConfirmOrder: () => void;
   isCreating: boolean;
   createError: string | null;
@@ -29,14 +31,14 @@ const DraftOrderSidebar: React.FC<DraftOrderSidebarProps> = ({
   onRemoveItem,
   totalQuantity,
   totalAmount,
-  accountId,
-  onAccountIdChange,
+  selectedAccount,
+  onAccountChange,
   onConfirmOrder,
   isCreating,
   createError,
   createSuccess,
 }) => {
-  const isButtonDisabled = items.length === 0 || !accountId || isCreating;
+  const isButtonDisabled = items.length === 0 || !selectedAccount || isCreating;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-fit sticky top-24">
@@ -103,17 +105,13 @@ const DraftOrderSidebar: React.FC<DraftOrderSidebarProps> = ({
 
       <div className="p-4 bg-gray-50 rounded-b-lg border-t border-gray-100 space-y-4">
         <div>
-          <label htmlFor="accountId" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-            Account ID (Temporary)
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+            Account Lookup
           </label>
-          <input
-            type="text"
-            id="accountId"
+          <AccountLookup
+            value={selectedAccount}
+            onChange={onAccountChange}
             disabled={isCreating}
-            placeholder="Enter Salesforce Account ID"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border py-2 px-3 disabled:bg-gray-100 disabled:text-gray-500"
-            value={accountId}
-            onChange={(e) => onAccountIdChange(e.target.value)}
           />
         </div>
 
