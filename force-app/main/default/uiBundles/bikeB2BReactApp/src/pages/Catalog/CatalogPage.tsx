@@ -1,8 +1,28 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useBikeCatalog } from '@/services/bikeService';
+import CatalogFilters from './CatalogFilters';
 
 const CatalogPage: React.FC = () => {
   const { bikes, loading, error } = useBikeCatalog();
+  const [searchText, setSearchText] = useState<string>('');
+  const [selectedBrand, setSelectedBrand] = useState<string>('all');
+
+  const uniqueBrands = useMemo(() => {
+    return Array.from(new Set(bikes.map((b) => b.brand).filter(Boolean))).sort();
+  }, [bikes]);
+
+  const filteredBikes = useMemo(() => {
+    return bikes.filter((bike) => {
+      const matchesSearch =
+        !searchText ||
+        bike.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        bike.code.toLowerCase().includes(searchText.toLowerCase());
+
+      const matchesBrand = selectedBrand === 'all' || bike.brand === selectedBrand;
+
+      return matchesSearch && matchesBrand;
+    });
+  }, [bikes, searchText, selectedBrand]);
 
   return (
     <div className="space-y-6">
@@ -12,6 +32,16 @@ const CatalogPage: React.FC = () => {
           <p className="mt-2 text-gray-600">Browse our available bike models.</p>
         </div>
       </header>
+
+      {!loading && !error && bikes.length > 0 && (
+        <CatalogFilters
+          searchText={searchText}
+          onSearchChange={setSearchText}
+          selectedBrand={selectedBrand}
+          onBrandChange={setSelectedBrand}
+          brands={uniqueBrands}
+        />
+      )}
 
       {loading && (
         <div className="flex justify-center items-center py-20">
@@ -43,7 +73,22 @@ const CatalogPage: React.FC = () => {
         </div>
       )}
 
-      {!loading && !error && bikes.length > 0 && (
+      {!loading && !error && bikes.length > 0 && filteredBikes.length === 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <p className="text-gray-500 text-lg">No bikes match your filters.</p>
+          <button
+            onClick={() => {
+              setSearchText('');
+              setSelectedBrand('all');
+            }}
+            className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Clear all filters
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && filteredBikes.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -56,7 +101,7 @@ const CatalogPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {bikes.map((bike) => (
+                {filteredBikes.map((bike) => (
                   <tr key={bike.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{bike.name}</div>
