@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Account__c</fullName>
+    <!-- TODO: Account is required for Bike Order. Metadata configuration ensures relationship. -->
+    <externalId>false</externalId>
+    <label>Account</label>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Bike Orders</relationshipLabel>
+    <relationshipName>Bike_Orders</relationshipName>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
