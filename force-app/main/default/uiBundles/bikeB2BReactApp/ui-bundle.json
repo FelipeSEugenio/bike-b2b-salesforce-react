@@ -1,5 +1,5 @@
 {
-  "outputDir": "dist",
+  "outputDir": "build",
   "routing": {
     "trailingSlash": "never",
     "fallback": "index.html"
