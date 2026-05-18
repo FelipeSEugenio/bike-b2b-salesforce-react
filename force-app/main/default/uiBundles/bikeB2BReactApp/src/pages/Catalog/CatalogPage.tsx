@@ -1,13 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { useBikeCatalog } from '@/services/bikeService';
+import { createOrderWithItems } from '@/services/orderMutationService';
 import CatalogFilters from './CatalogFilters';
 import DraftOrderSidebar, { DraftOrderItem } from './DraftOrderSidebar';
+import { Link } from 'react-router';
 
 const CatalogPage: React.FC = () => {
   const { bikes, loading, error } = useBikeCatalog();
   const [searchText, setSearchText] = useState<string>('');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [draftItems, setDraftItems] = useState<DraftOrderItem[]>([]);
+  
+  // Mutation states
+  const [accountId, setAccountId] = useState<string>('');
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
   const uniqueBrands = useMemo(() => {
     return Array.from(new Set(bikes.map((b) => b.brand).filter(Boolean))).sort();
@@ -64,6 +72,32 @@ const CatalogPage: React.FC = () => {
 
   const handleRemoveItem = (bikeId: string) => {
     setDraftItems(prev => prev.filter(item => item.bikeId !== bikeId));
+  };
+
+  const handleConfirmOrder = async () => {
+    if (draftItems.length === 0 || !accountId) return;
+
+    try {
+      setIsCreating(true);
+      setCreateError(null);
+      setCreateSuccess(null);
+
+      const result = await createOrderWithItems({
+        accountId,
+        status: 'Draft',
+        items: draftItems,
+        totalAmount
+      });
+
+      setCreateSuccess(`Order ${result.orderId} created successfully!`);
+      setDraftItems([]);
+      setAccountId('');
+    } catch (err) {
+      console.error('Failed to create order:', err);
+      setCreateError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -162,8 +196,9 @@ const CatalogPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <button
+                            disabled={isCreating}
                             onClick={() => handleAddToOrder(bike.id)}
-                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
                           >
                             Add to order
                           </button>
@@ -177,14 +212,29 @@ const CatalogPage: React.FC = () => {
           )}
         </div>
 
-        <div className="w-full">
+        <div className="w-full space-y-4">
           <DraftOrderSidebar
             items={draftItems}
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}
             totalQuantity={totalQuantity}
             totalAmount={totalAmount}
+            accountId={accountId}
+            onAccountIdChange={setAccountId}
+            onConfirmOrder={handleConfirmOrder}
+            isCreating={isCreating}
+            createError={createError}
+            createSuccess={createSuccess}
           />
+          
+          {createSuccess && (
+            <Link 
+              to="/orders"
+              className="block w-full text-center py-2 px-4 border border-blue-600 text-blue-600 font-medium rounded hover:bg-blue-50 transition-colors"
+            >
+              View My Orders
+            </Link>
+          )}
         </div>
       </div>
     </div>
