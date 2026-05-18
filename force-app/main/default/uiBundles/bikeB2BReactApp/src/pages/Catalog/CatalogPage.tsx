@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useBikeCatalog } from '@/services/bikeService';
 import { createOrderWithItems } from '@/services/orderMutationService';
+import { AccountSummary } from '@/services/accountService';
 import CatalogFilters from './CatalogFilters';
 import DraftOrderSidebar, { DraftOrderItem } from './DraftOrderSidebar';
 import { Link } from 'react-router';
@@ -12,7 +13,7 @@ const CatalogPage: React.FC = () => {
   const [draftItems, setDraftItems] = useState<DraftOrderItem[]>([]);
   
   // Mutation states
-  const [accountId, setAccountId] = useState<string>('');
+  const [selectedAccount, setSelectedAccount] = useState<AccountSummary | null>(null);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
@@ -75,7 +76,7 @@ const CatalogPage: React.FC = () => {
   };
 
   const handleConfirmOrder = async () => {
-    if (draftItems.length === 0 || !accountId) return;
+    if (draftItems.length === 0 || !selectedAccount) return;
 
     try {
       setIsCreating(true);
@@ -83,15 +84,15 @@ const CatalogPage: React.FC = () => {
       setCreateSuccess(null);
 
       const result = await createOrderWithItems({
-        accountId,
+        accountId: selectedAccount.id,
         status: 'Draft',
         items: draftItems,
         totalAmount
       });
 
-      setCreateSuccess(`Order ${result.orderId} created successfully!`);
+      setCreateSuccess(`Order ${result.orderId} created successfully for ${selectedAccount.name}!`);
       setDraftItems([]);
-      setAccountId('');
+      setSelectedAccount(null);
     } catch (err) {
       console.error('Failed to create order:', err);
       setCreateError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -219,8 +220,8 @@ const CatalogPage: React.FC = () => {
             onRemoveItem={handleRemoveItem}
             totalQuantity={totalQuantity}
             totalAmount={totalAmount}
-            accountId={accountId}
-            onAccountIdChange={setAccountId}
+            selectedAccount={selectedAccount}
+            onAccountChange={setSelectedAccount}
             onConfirmOrder={handleConfirmOrder}
             isCreating={isCreating}
             createError={createError}
