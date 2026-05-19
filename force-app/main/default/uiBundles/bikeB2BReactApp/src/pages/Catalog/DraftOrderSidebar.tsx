@@ -5,7 +5,7 @@ import { AccountSummary } from '@/services/accountService';
 export type DraftOrderItem = {
   bikeId: string;
   name: string;
-  code: string;
+  model: string;
   brand: string;
   unitPrice: number;
   quantity: number;
@@ -62,7 +62,7 @@ const DraftOrderSidebar: React.FC<DraftOrderSidebarProps> = ({
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{item.name}</h3>
-                  <p className="text-xs text-gray-500">{item.code}</p>
+                  <p className="text-xs text-gray-500">{item.model}</p>
                 </div>
                 {!isCreating && (
                   <button 

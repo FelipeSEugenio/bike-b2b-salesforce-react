@@ -27,7 +27,7 @@ const CatalogPage: React.FC = () => {
       const matchesSearch =
         !searchText ||
         bike.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        bike.code.toLowerCase().includes(searchText.toLowerCase());
+        bike.model.toLowerCase().includes(searchText.toLowerCase());
 
       const matchesBrand = selectedBrand === 'all' || bike.brand === selectedBrand;
 
@@ -57,7 +57,7 @@ const CatalogPage: React.FC = () => {
       return [...prev, {
         bikeId: bike.id,
         name: bike.name,
-        code: bike.code,
+        model: bike.model,
         brand: bike.brand,
         unitPrice: bike.price,
         quantity: 1
@@ -171,8 +171,9 @@ const CatalogPage: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Image</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Code</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Model</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Brand</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
@@ -182,10 +183,22 @@ const CatalogPage: React.FC = () => {
                     {filteredBikes.map((bike) => (
                       <tr key={bike.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
+                          {bike.imageUrl ? (
+                            <img
+                              src={bike.imageUrl}
+                              alt={bike.name}
+                              width={64}
+                              height={64}
+                              className="object-cover rounded-md"
+                              style={{ width: '64px', height: '64px' }}
+                            />
+                          ) : null}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{bike.name}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{bike.code}</div>
+                          <div className="text-sm text-gray-500">{bike.model}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500">{bike.brand}</div>

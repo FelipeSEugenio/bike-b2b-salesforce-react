@@ -5,10 +5,11 @@ import { GET_BIKES_QUERY } from '@/api/queries';
 export type Bike = {
   id: string;
   name: string;
-  code: string;
+  model: string;
   brand: string;
   price: number;
   displayPrice?: string;
+  imageUrl?: string;
 };
 
 interface GraphQLResponse {
@@ -19,9 +20,10 @@ interface GraphQLResponse {
           node: {
             Id: string;
             Name: { value: string };
-            Code__c: { value: string };
+            Model__c: { value: string };
             Brand__c: { value: string };
             Price__c: { value: number; displayValue: string };
+            Image_URL__c?: { value: string };
           };
         }>;
       };
@@ -43,10 +45,11 @@ export function useBikeCatalog() {
         const mappedBikes: Bike[] = data.uiapi.query.Bike__c.edges.map(edge => ({
           id: edge.node.Id,
           name: edge.node.Name.value,
-          code: edge.node.Code__c.value,
+          model: edge.node.Model__c.value,
           brand: edge.node.Brand__c.value,
           price: edge.node.Price__c.value,
-          displayPrice: edge.node.Price__c.displayValue
+          displayPrice: edge.node.Price__c.displayValue,
+          imageUrl: edge.node.Image_URL__c?.value
         }));
 
         setBikes(mappedBikes);
