@@ -8,17 +8,21 @@ export async function executeGraphQL<TData, TVariables>(
   query: string,
   variables?: TVariables
 ): Promise<TData> {
-  const data = await createDataSDK();
-  // SDK types graphql() first param as string; at runtime it may accept gql DocumentNode too
-  const response = await data.graphql?.<TData, TVariables>(query, variables);
+  const sdk = await createDataSDK();
+  if (!sdk.graphql) {
+    throw new Error('GraphQL is not supported in this environment or SDK initialization failed.');
+  }
+  const response = await sdk.graphql<TData, TVariables>({ query, variables });
 
-  if (!response) {
-    throw new Error('GraphQL response is undefined');
+  console.log('GraphQL raw response:', JSON.stringify(response, null, 2));
+
+  if (response.errors && response.errors.length > 0) {
+    const msg = response.errors.map((e) => e.message).join('; ');
+    throw new Error(`GraphQL Error: ${msg}`);
   }
 
-  if (response?.errors?.length) {
-    const msg = response.errors.map(e => e.message).join('; ');
-    throw new Error(`GraphQL Error: ${msg}`);
+  if (!response.data) {
+    throw new Error('GraphQL response returned no data.');
   }
 
   return response.data;
