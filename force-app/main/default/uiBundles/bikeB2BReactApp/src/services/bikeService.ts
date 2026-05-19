@@ -9,6 +9,7 @@ export type Bike = {
   brand: string;
   price: number;
   displayPrice?: string;
+  imageUrl?: string;
 };
 
 interface GraphQLResponse {
@@ -22,6 +23,7 @@ interface GraphQLResponse {
             Code__c: { value: string };
             Brand__c: { value: string };
             Price__c: { value: number; displayValue: string };
+            Image_URL__c?: { value: string };
           };
         }>;
       };
@@ -46,7 +48,8 @@ export function useBikeCatalog() {
           code: edge.node.Code__c.value,
           brand: edge.node.Brand__c.value,
           price: edge.node.Price__c.value,
-          displayPrice: edge.node.Price__c.displayValue
+          displayPrice: edge.node.Price__c.displayValue,
+          imageUrl: edge.node.Image_URL__c?.value
         }));
 
         setBikes(mappedBikes);

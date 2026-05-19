@@ -171,6 +171,7 @@ const CatalogPage: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Image</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Code</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Brand</th>
@@ -181,6 +182,18 @@ const CatalogPage: React.FC = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredBikes.map((bike) => (
                       <tr key={bike.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {bike.imageUrl ? (
+                            <img
+                              src={bike.imageUrl}
+                              alt={bike.name}
+                              width={64}
+                              height={64}
+                              className="object-cover rounded-md"
+                              style={{ width: '64px', height: '64px' }}
+                            />
+                          ) : null}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{bike.name}</div>
                         </td>

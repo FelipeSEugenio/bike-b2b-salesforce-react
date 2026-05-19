@@ -19,6 +19,9 @@ export const GET_BIKES_QUERY = `
                 value
                 displayValue
               }
+              Image_URL__c {
+                value
+              }
             }
           }
         }
