@@ -9,7 +9,7 @@ export const GET_BIKES_QUERY = `
               Name {
                 value
               }
-              Code__c {
+              Model__c {
                 value
               }
               Brand__c {

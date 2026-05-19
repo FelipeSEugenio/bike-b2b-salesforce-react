@@ -4,7 +4,7 @@ import { CREATE_ORDER_MUTATION, CREATE_ORDER_ITEM_MUTATION } from '@/api/queries
 export type DraftOrderItemInput = {
   bikeId: string;
   name: string;
-  code: string;
+  model: string;
   brand: string;
   unitPrice: number;
   quantity: number;
