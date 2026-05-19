@@ -17,10 +17,20 @@ export type CreateOrderInput = {
   totalAmount: number;
 };
 
-interface CreateRecordResponse {
+interface CreateOrderResponse {
   uiapi: {
-    recordCreate: {
-      record: {
+    Bike_Order__cCreate: {
+      Record: {
+        Id: string;
+      };
+    };
+  };
+}
+
+interface CreateOrderItemResponse {
+  uiapi: {
+    Bike_Order_Item__cCreate: {
+      Record: {
         Id: string;
       };
     };
@@ -29,10 +39,9 @@ interface CreateRecordResponse {
 
 export async function createOrderWithItems(input: CreateOrderInput): Promise<{ orderId: string }> {
   // 1. Create the Order
-  const orderResponse = await executeGraphQL<CreateRecordResponse, any>(CREATE_ORDER_MUTATION, {
+  const orderResponse = await executeGraphQL<CreateOrderResponse, any>(CREATE_ORDER_MUTATION, {
     input: {
-      apiName: 'Bike_Order__c',
-      fields: {
+      Bike_Order__c: {
         Account__c: input.accountId,
         Status__c: input.status,
         Order_Date__c: new Date().toISOString().split('T')[0] // Set today's date
@@ -40,15 +49,14 @@ export async function createOrderWithItems(input: CreateOrderInput): Promise<{ o
     }
   });
 
-  const orderId = orderResponse.uiapi.recordCreate.record.Id;
+  const orderId = orderResponse.uiapi.Bike_Order__cCreate.Record.Id;
 
   // 2. Create the Items
   // We perform these sequentially or in parallel. Parallel is faster.
   const itemPromises = input.items.map(item => {
-    return executeGraphQL<CreateRecordResponse, any>(CREATE_ORDER_ITEM_MUTATION, {
+    return executeGraphQL<CreateOrderItemResponse, any>(CREATE_ORDER_ITEM_MUTATION, {
       input: {
-        apiName: 'Bike_Order_Item__c',
-        fields: {
+        Bike_Order_Item__c: {
           Bike_Order__c: orderId,
           Bike__c: item.bikeId,
           Quantity__c: item.quantity,

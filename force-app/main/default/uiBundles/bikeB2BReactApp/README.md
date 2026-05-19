@@ -1,75 +1,78 @@
-# Base React App
+# Catálogo de Bikes B2B (React + Salesforce Multi-Framework)
 
-Base React App is a template application that demonstrates how to build a React UI Bundle on the Salesforce platform with Vite, TypeScript, Tailwind, shadcn/ui, and the Salesforce UI Bundle SDK. It provides a minimal shell (home, 404), routing, and GraphQL codegen support so feature apps can extend it via the patches pipeline.
+## Visão Geral
 
-This UI Bundle lives inside an SFDX project. The project root is the directory that contains `force-app/` and `sfdx-project.json`. Run the commands in the sections below from the paths indicated.
+Este projeto é um catálogo de bikes construído em React e rodando nativamente na plataforma Salesforce utilizando a arquitetura Multi-Framework (uiBundle / Agentforce 360). Ele demonstra como integrar uma interface de usuário moderna diretamente na org.
 
-## Table of contents
+A aplicação utiliza a GraphQL UI API em conjunto com o `@salesforce/sdk-data` para realizar a leitura e escrita de dados de forma direta, dispensando totalmente a necessidade de uso de código Apex no backend.
 
-- [Run (development)](#run-development)
-- [Build](#build)
-- [Deploy](#deploy)
-- [Test](#test)
+A interface permite aos usuários listar os modelos de bikes disponíveis, realizar pesquisas e filtragens detalhadas, e criar novos pedidos de compra (`Bike_Order__c`) a partir do próprio catálogo, oferecendo uma experiência fluida de comércio B2B.
 
-## Run (development)
+## Arquitetura / Stack
 
-From the UI Bundle directory (`force-app/main/default/uiBundles/base-react-app`):
+- **Frontend:** React estruturado sobre a arquitetura Salesforce Multi-Framework / uiBundle.
+- **Camada de Dados:** GraphQL UI API (utilizada tanto para consultas quanto para mutações).
+- **GraphQL Client:** `@salesforce/sdk-data` e `createDataSDK` gerenciam as chamadas, simplificando as operações GraphQL de forma nativa.
+- **Objetos Salesforce (Custom Objects):**
+  - `Bike__c` (Catálogo de bicicletas)
+  - `Bike_Order__c` (Cabeçalho do pedido)
+  - `Bike_Order_Item__c` (Itens do pedido)
+- **Validação de Negócio:** Um Flow nativo (`Bike_Order_Validate_Submitted`) garante regras de negócio críticas, como a obrigatoriedade do preenchimento da conta (`Account__c`) caso o pedido seja submetido com `Status__c = "Submitted"`.
+
+## Fluxos Principais
+
+### Catálogo de Bikes
+
+A aplicação realiza a leitura do inventário a partir do objeto `Bike__c`.
+A constante `GET_BIKES_QUERY` obtém os campos fundamentais (como `Id`, `Name`, `Model__c`, `Brand__c`, `Price__c`, `Image_URL__c`) utilizando a infraestrutura da `uiapi.query`.
+O hook de customização `useBikeCatalog` encapsula esta chamada e processa os nós recebidos para gerar um array tipado `Bike`, que é consumido diretamente pelos componentes da UI para a listagem na tabela, busca e filtro por marca.
+
+### Criação de Pedidos (Bike_Order\_\_c)
+
+Ações de conversão (como clicar no botão "Add to order") instanciam criações de pedido utilizando mutações específicas da GraphQL UI API.
+Estas mutações aderem rigorosamente ao padrão do schema definido no `UIAPIMutations`, formatadas no modelo `<ObjectApiName>Create` para a função e `<ObjectApiName>CreateInput` para a tipagem dos dados (e não usando generic `RecordCreateInput` / `recordCreate`).
+A consistência dos dados inseridos é garantida pelo Flow Salesforce `Bike_Order_Validate_Submitted`, que não permite o salvamento e avanço de pedidos `Submitted` sem que a conta esteja devidamente informada.
+
+## Como rodar o projeto
+
+### Pré-requisitos
+
+- Node.js e npm (ou yarn) instalados.
+- Salesforce CLI (`sf` / `sfdx`) configurado e autenticado em um ambiente alvo (org) que suporte Multi-Framework/uiBundle.
+
+### Instalação de dependências e Execução (Desenvolvimento)
+
+Dentro da raiz do projeto do uiBundle (ex: `force-app/main/default/uiBundles/bikeB2BReactApp`):
 
 ```bash
 npm install
 npm run dev
 ```
 
-This starts the Vite dev server (e.g. http://localhost:5173). Use `npm run dev:design` to run in design mode.
+### Build e Deploy
 
-## Build
+A partir do **diretório raiz do projeto SFDX**:
 
-From the UI Bundle directory:
-
-```bash
-npm install
-npm run build
-```
-
-The production build is written to `dist/` inside the UI Bundle folder. Deploy using the steps in [Deploy](#deploy).
-
-## Deploy
-
-From the **SFDX project root** (the directory that contains `force-app/`):
-
-1. Build the UI Bundle:
+1. Faça o build do UI Bundle:
 
    ```bash
-   cd force-app/main/default/uiBundles/base-react-app && npm install && npm run build && cd -
+   cd force-app/main/default/uiBundles/bikeB2BReactApp && npm install && npm run build && cd -
    ```
 
-2. Deploy the UI Bundle only:
-
+2. Execute o deploy do Bundle para a org alvo:
    ```bash
-   sf project deploy start --source-dir force-app/main/default/ui-bundles --target-org <alias>
+   sf project deploy start --source-dir force-app/main/default/ui-bundles --target-org <alias_da_sua_org>
    ```
-
-   Or deploy all metadata:
-
+   _Ou para implantar todo o metadata da org:_
    ```bash
-   sf project deploy start --source-dir force-app --target-org <alias>
+   sf project deploy start --source-dir force-app --target-org <alias_da_sua_org>
    ```
 
-   Replace `<alias>` with your target org alias.
+Uma vez realizado o deploy, a aplicação pode ser acessada de forma integrada através do App Launcher ou instanciada através de um site Experience Cloud / Lightning App Builder preparado.
 
-## Test
+## Estado atual e próximos passos
 
-From the UI Bundle directory:
+Nesta branch, **o foco exclusivo do desenvolvimento foi a estabilização do fluxo de dados**. Foram corrigidas as definições das mutações de criação de `order` e `order item` via GraphQL UI API para consumirem os tipos concretos gerados no backend, eliminando erros estruturais durante o `submit`.
 
-```bash
-npm install
-npm run test
-```
-
-This runs the unit test suite (Vitest). For end-to-end tests from the **base-react-app package root**:
-
-```bash
-npm run test:e2e
-```
-
-This installs dependencies, builds with E2E asset rewrites, and runs Playwright. Ensure Chromium is installed (`npx playwright install chromium` if needed).
+**Próximos passos:**
+Uma branch futura e apartada deste foco de infraestrutura trará os refinamentos visuais necessários e melhorias em design (responsividade, UX dos estados de loading e tabelas limpas, formatação da cartilha de componentes), as quais possivelmente ganharão destaque em uma nova seção de Interface/UI neste documento.
