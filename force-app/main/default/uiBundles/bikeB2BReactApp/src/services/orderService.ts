@@ -1,4 +1,5 @@
 import { executeGraphQL } from '@/api/graphqlClient';
+import { GET_ORDERS_QUERY } from '@/api/queries';
 import { useState, useEffect } from 'react';
 
 export type Order = {
@@ -11,41 +12,6 @@ export type Order = {
   createdDate: string;
   displayCreatedDate?: string;
 };
-
-const GET_ORDERS_QUERY = `
-  query getOrders {
-    uiapi {
-      query {
-        Bike_Order__c {
-          edges {
-            node {
-              Id
-              Name {
-                value
-              }
-              Status__c {
-                value
-                displayValue
-              }
-              Account__c {
-                value
-                displayValue
-              }
-              Total_Amount__c {
-                value
-                displayValue
-              }
-              CreatedDate {
-                value
-                displayValue
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
 
 interface GraphQLResponse {
   uiapi: {

@@ -1,4 +1,5 @@
 import { executeGraphQL } from '@/api/graphqlClient';
+import { CREATE_ORDER_MUTATION, CREATE_ORDER_ITEM_MUTATION } from '@/api/queries';
 
 export type DraftOrderItemInput = {
   bikeId: string;
@@ -15,30 +16,6 @@ export type CreateOrderInput = {
   items: DraftOrderItemInput[];
   totalAmount: number;
 };
-
-const CREATE_ORDER_MUTATION = `
-  mutation createOrder($input: RecordCreateInput!) {
-    uiapi {
-      recordCreate(input: $input) {
-        record {
-          Id
-        }
-      }
-    }
-  }
-`;
-
-const CREATE_ORDER_ITEM_MUTATION = `
-  mutation createOrderItem($input: RecordCreateInput!) {
-    uiapi {
-      recordCreate(input: $input) {
-        record {
-          Id
-        }
-      }
-    }
-  }
-`;
 
 interface CreateRecordResponse {
   uiapi: {

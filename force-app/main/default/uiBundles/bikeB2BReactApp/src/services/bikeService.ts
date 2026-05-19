@@ -1,5 +1,6 @@
 import { executeGraphQL } from '@/api/graphqlClient';
 import { useState, useEffect } from 'react';
+import { GET_BIKES_QUERY } from '@/api/queries';
 
 export type Bike = {
   id: string;
@@ -9,35 +10,6 @@ export type Bike = {
   price: number;
   displayPrice?: string;
 };
-
-const GET_BIKES_QUERY = `
-  query getBikes {
-    uiapi {
-      query {
-        Bike__c {
-          edges {
-            node {
-              Id
-              Name {
-                value
-              }
-              Code__c {
-                value
-              }
-              Brand__c {
-                value
-              }
-              Price__c {
-                value
-                displayValue
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
 
 interface GraphQLResponse {
   uiapi: {

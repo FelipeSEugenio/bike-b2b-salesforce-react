@@ -1,28 +1,10 @@
 import { executeGraphQL } from '@/api/graphqlClient';
+import { SEARCH_ACCOUNTS_QUERY } from '@/api/queries';
 
 export type AccountSummary = {
   id: string;
   name: string;
 };
-
-const SEARCH_ACCOUNTS_QUERY = `
-  query searchAccounts($searchTerm: String!) {
-    uiapi {
-      query {
-        Account(where: { Name: { like: $searchTerm } }) {
-          edges {
-            node {
-              Id
-              Name {
-                value
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
 
 interface GraphQLResponse {
   uiapi: {
