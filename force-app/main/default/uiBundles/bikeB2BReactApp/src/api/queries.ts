@@ -50,11 +50,26 @@ export const SEARCH_ACCOUNTS_QUERY = `
 `;
 
 export const CREATE_ORDER_MUTATION = `
-  mutation createOrder($input: RecordCreateInput!) {
+  mutation createOrder($input: Bike_Order__cCreateInput!) {
     uiapi {
-      recordCreate(input: $input) {
-        record {
+      Bike_Order__cCreate(input: $input) {
+        Record {
           Id
+          Name {
+            value
+          }
+          Status__c {
+            value
+            displayValue
+          }
+          Account__c {
+            value
+            displayValue
+          }
+          Total_Amount__c {
+            value
+            displayValue
+          }
         }
       }
     }
@@ -62,11 +77,24 @@ export const CREATE_ORDER_MUTATION = `
 `;
 
 export const CREATE_ORDER_ITEM_MUTATION = `
-  mutation createOrderItem($input: RecordCreateInput!) {
+  mutation createOrderItem($input: Bike_Order_Item__cCreateInput!) {
     uiapi {
-      recordCreate(input: $input) {
-        record {
+      Bike_Order_Item__cCreate(input: $input) {
+        Record {
           Id
+          Bike_Order__c {
+            value
+          }
+          Bike__c {
+            value
+          }
+          Quantity__c {
+            value
+          }
+          Unit_Price__c {
+            value
+            displayValue
+          }
         }
       }
     }
