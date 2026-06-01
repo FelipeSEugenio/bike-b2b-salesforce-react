@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { searchAccountsByName } from '../services/accountService';
+import { useAccountSearch } from '../hooks/useAccountSearch';
 import { AccountSummary } from '../types';
 
 export type AccountLookupProps = {
@@ -10,10 +10,10 @@ export type AccountLookupProps = {
 
 const AccountLookup: React.FC<AccountLookupProps> = ({ value, onChange, disabled }) => {
   const [searchTerm, setSearchTerm] = useState(value?.name || '');
-  const [suggestions, setSuggestions] = useState<AccountSummary[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { suggestions, isSearching } = useAccountSearch(searchTerm, value);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -31,23 +31,14 @@ const AccountLookup: React.FC<AccountLookupProps> = ({ value, onChange, disabled
     setSearchTerm(value?.name || '');
   }, [value]);
 
-  // Debounced search
+  // Handle dropdown visibility based on suggestions
   useEffect(() => {
-    const handler = setTimeout(async () => {
-      if (searchTerm.length >= 2 && !value || (value && searchTerm !== value.name)) {
-        setIsSearching(true);
-        const results = await searchAccountsByName(searchTerm);
-        setSuggestions(results);
-        setIsSearching(false);
-        setShowDropdown(true);
-      } else {
-        setSuggestions([]);
-        setShowDropdown(false);
-      }
-    }, 400);
-
-    return () => clearTimeout(handler);
-  }, [searchTerm, value]);
+    if (suggestions.length > 0) {
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+    }
+  }, [suggestions]);
 
   const handleSelect = (account: AccountSummary) => {
     onChange(account);
@@ -58,7 +49,6 @@ const AccountLookup: React.FC<AccountLookupProps> = ({ value, onChange, disabled
   const handleClear = () => {
     onChange(null);
     setSearchTerm('');
-    setSuggestions([]);
     setShowDropdown(false);
   };
 

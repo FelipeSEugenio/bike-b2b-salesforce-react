@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useBikeCatalog } from '../hooks/useBikeCatalog';
-import { createOrderWithItems } from '@/features/orders/services/orderMutationService';
+import { useOrderMutation } from '@/features/orders/hooks/useOrderMutation';
 import { AccountSummary } from '@/features/accounts/types';
-import CatalogFilters from '../components/CatalogFilters';
+import CatalogFilters from './CatalogFilters';
 import DraftOrderSidebar, { DraftOrderItem } from '@/features/orders/components/DraftOrderSidebar';
 import { Link } from 'react-router';
 
@@ -12,11 +12,9 @@ const CatalogPage: React.FC = () => {
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [draftItems, setDraftItems] = useState<DraftOrderItem[]>([]);
   
-  // Mutation states
+  // Mutation state orchestrated by hook
   const [selectedAccount, setSelectedAccount] = useState<AccountSummary | null>(null);
-  const [isCreating, setIsCreating] = useState<boolean>(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [createSuccess, setCreateSuccess] = useState<string | null>(null);
+  const { createOrder, isCreating, createError, createSuccess } = useOrderMutation();
 
   const uniqueBrands = useMemo(() => {
     return Array.from(new Set(bikes.map((b) => b.brand).filter(Boolean))).sort();
@@ -78,26 +76,16 @@ const CatalogPage: React.FC = () => {
   const handleConfirmOrder = async () => {
     if (draftItems.length === 0 || !selectedAccount) return;
 
-    try {
-      setIsCreating(true);
-      setCreateError(null);
-      setCreateSuccess(null);
+    const result = await createOrder({
+      accountId: selectedAccount.id,
+      status: 'Draft',
+      items: draftItems,
+      totalAmount
+    }, selectedAccount.name);
 
-      const result = await createOrderWithItems({
-        accountId: selectedAccount.id,
-        status: 'Draft',
-        items: draftItems,
-        totalAmount
-      });
-
-      setCreateSuccess(`Order ${result.orderId} created successfully for ${selectedAccount.name}!`);
+    if (result.success) {
       setDraftItems([]);
       setSelectedAccount(null);
-    } catch (err) {
-      console.error('Failed to create order:', err);
-      setCreateError(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setIsCreating(false);
     }
   };
 
