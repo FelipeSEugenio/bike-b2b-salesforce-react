@@ -288,22 +288,4 @@ Logic fixes and UI/design refinements are kept in separate branches so that each
 
 ---
 
-## Future Work
-
-- **Orders Dashboard:** add an analytics view with KPIs (total revenue, orders by status, top models) and charts, built on top of the existing `GET_ORDERS_QUERY` GraphQL data and the current Tailwind design system.
-- **Order Detail View:** a drill-down page for individual `Bike_Order__c` records showing line items, status history, and account details.
-- **Agentforce Integration:** surface the catalog and order flow as tools available to an Agentforce Agent, enabling natural-language B2B ordering workflows.
-- **Pagination and Performance:** implement cursor-based pagination for large `Bike__c` catalogs via GraphQL `after` / `first` arguments.
-- **Enhanced Validation:** extend the Flow to handle additional business rules (stock limits, pricing tiers) without touching Apex.
-
----
-
-## License / Credits
-
-This project is a **demo and portfolio application**, created to showcase modern Salesforce development patterns using React, the GraphQL UI API, and a custom Tailwind-based design system — all without Apex.
-
-Feel free to use it as a reference or starting point for your own Salesforce uiBundle projects.
-
----
-
 _Built with React · Salesforce Multi-Framework uiBundle · GraphQL UI API · Tailwind CSS_
