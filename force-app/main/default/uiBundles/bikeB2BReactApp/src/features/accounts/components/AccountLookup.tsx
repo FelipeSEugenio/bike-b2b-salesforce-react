@@ -31,14 +31,10 @@ const AccountLookup: React.FC<AccountLookupProps> = ({ value, onChange, disabled
     setSearchTerm(value?.name || '');
   }, [value]);
 
-  // Handle dropdown visibility based on suggestions
+  // Show results panel while the user is actively searching (2+ characters)
   useEffect(() => {
-    if (suggestions.length > 0) {
-      setShowDropdown(true);
-    } else {
-      setShowDropdown(false);
-    }
-  }, [suggestions]);
+    setShowDropdown(searchTerm.length >= 2);
+  }, [searchTerm]);
 
   const handleSelect = (account: AccountSummary) => {
     onChange(account);
