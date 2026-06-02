@@ -1,26 +1,43 @@
 import React from 'react';
+import { useDashboardFilters } from '../hooks/useDashboardFilters';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
 import { useDashboardTrends } from '../hooks/useDashboardTrends';
+import { useOrdersOverview } from '../hooks/useOrdersOverview';
+import { useAccountActivity } from '../hooks/useAccountActivity';
 import DashboardKpiCard from './DashboardKpiCard';
 import DashboardChartPlaceholder from './DashboardChartPlaceholder';
 import DashboardFiltersPanel from './DashboardFiltersPanel';
+import DashboardRecentOrdersTable from './DashboardRecentOrdersTable';
 
 const DashboardPage: React.FC = () => {
-  const { summary, loading: summaryLoading, error: summaryError } = useDashboardSummary();
-  const { trends, loading: trendsLoading, error: trendsError } = useDashboardTrends();
+  const { filters } = useDashboardFilters();
+  const { summary, loading: summaryLoading, error: summaryError } = useDashboardSummary(filters);
+  const { trends, loading: trendsLoading, error: trendsError } = useDashboardTrends(filters);
+  const {
+    ordersOverview,
+    loading: ordersLoading,
+    error: ordersError,
+  } = useOrdersOverview(filters);
+  const {
+    accountActivity,
+    loading: accountsLoading,
+    error: accountsError,
+  } = useAccountActivity(filters);
 
-  const loading = summaryLoading || trendsLoading;
-  const error = summaryError ?? trendsError;
+  const loading = summaryLoading || trendsLoading || ordersLoading || accountsLoading;
+  const error = summaryError ?? trendsError ?? ordersError ?? accountsError;
 
   return (
     <div className="space-y-8">
       <header className="border-b border-border pb-4">
         <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Dashboard</h1>
         <p className="mt-1.5 text-muted-foreground text-sm">
-          B2B sales overview — structure only; KPIs and charts will be wired to GraphQL later.
+          B2B operational view — bikes, orders, and account activity (mocked contracts).
         </p>
-        {summary?.asOfDateISO && !loading && (
-          <p className="mt-1 text-xs text-muted-foreground">As of {summary.asOfDateISO}</p>
+        {summary?.asOf && !loading && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            As of {new Date(summary.asOf).toLocaleString()}
+          </p>
         )}
       </header>
 
@@ -47,7 +64,7 @@ const DashboardPage: React.FC = () => {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 Summary
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {summary?.kpis.map((kpi) => (
                   <DashboardKpiCard key={kpi.id} kpi={kpi} />
                 ))}
@@ -63,26 +80,24 @@ const DashboardPage: React.FC = () => {
                   <DashboardChartPlaceholder key={series.id} series={series} />
                 ))}
               </div>
-              <CardTablePlaceholder />
+              {ordersOverview && (
+                <div aria-label="Recent orders">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Recent orders
+                  </h3>
+                  <DashboardRecentOrdersTable ordersOverview={ordersOverview} />
+                </div>
+              )}
             </section>
           </div>
 
           <aside aria-label="Filters and context" className="w-full">
-            <DashboardFiltersPanel />
+            <DashboardFiltersPanel filters={filters} accountActivity={accountActivity} />
           </aside>
         </div>
       )}
     </div>
   );
 };
-
-/** TODO: Replace with orders overview table fed by getDashboardOrdersOverview(). */
-function CardTablePlaceholder() {
-  return (
-    <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-      Table area — orders overview placeholder
-    </div>
-  );
-}
 
 export default DashboardPage;

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getDashboardTrends } from '../services/dashboardService';
-import type { DashboardFilters, DashboardTrends } from '../types/dashboardTypes';
+import { getAccountActivity } from '../services/dashboardService';
+import type { AccountActivity, DashboardFilters } from '../types/dashboardTypes';
 
-export function useDashboardTrends(filters: DashboardFilters) {
-  const [trends, setTrends] = useState<DashboardTrends | null>(null);
+export function useAccountActivity(filters: DashboardFilters) {
+  const [accountActivity, setAccountActivity] = useState<AccountActivity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,13 +13,13 @@ export function useDashboardTrends(filters: DashboardFilters) {
     async function load() {
       try {
         setLoading(true);
-        const data = await getDashboardTrends(filters);
+        const data = await getAccountActivity(filters);
         if (active) {
-          setTrends(data);
+          setAccountActivity(data);
           setError(null);
         }
       } catch (err) {
-        console.error('Error loading dashboard trends:', err);
+        console.error('Error loading account activity:', err);
         if (active) {
           setError(err instanceof Error ? err.message : 'An unknown error occurred');
         }
@@ -36,5 +36,5 @@ export function useDashboardTrends(filters: DashboardFilters) {
     };
   }, [filters.dateRange.startDate, filters.dateRange.endDate, filters.accountId]);
 
-  return { trends, loading, error };
+  return { accountActivity, loading, error };
 }

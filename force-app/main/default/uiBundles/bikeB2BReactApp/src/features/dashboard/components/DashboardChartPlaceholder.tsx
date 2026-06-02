@@ -6,10 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import type { DashboardTrendSeries } from '../types/dashboardTypes';
+import type { TrendSeries } from '../types/dashboardTypes';
 
 interface DashboardChartPlaceholderProps {
-  series: DashboardTrendSeries;
+  series: TrendSeries;
 }
 
 const DashboardChartPlaceholder: React.FC<DashboardChartPlaceholderProps> = ({
@@ -22,7 +22,7 @@ const DashboardChartPlaceholder: React.FC<DashboardChartPlaceholderProps> = ({
       <CardHeader>
         <CardTitle>{series.label}</CardTitle>
         <CardDescription>
-          {/* TODO: Replace with chart library (e.g. orders/revenue over time). */}
+          {/* TODO: Replace with chart library wired to TrendSeries points. */}
           Placeholder — {pointCount} data points loaded
         </CardDescription>
       </CardHeader>

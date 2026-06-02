@@ -6,10 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import type { DashboardKpi } from '../types/dashboardTypes';
+import type { DashboardSummaryKpi } from '../types/dashboardTypes';
 
 interface DashboardKpiCardProps {
-  kpi: DashboardKpi;
+  kpi: DashboardSummaryKpi;
 }
 
 const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({ kpi }) => {

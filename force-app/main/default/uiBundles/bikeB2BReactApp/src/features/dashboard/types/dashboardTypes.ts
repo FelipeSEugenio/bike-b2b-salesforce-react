@@ -1,65 +1,121 @@
-export type DashboardKpiId =
-  | 'openOrders'
-  | 'ordersThisMonth'
-  | 'revenueThisMonth'
-  | 'avgOrderValue';
+export type ISODate = string;
+export type ISODateTime = string;
+export type Money = number;
+export type DisplayMoney = string;
 
-export interface DashboardKpi {
-  id: DashboardKpiId;
+export type DashboardDateRangePreset = 'last7' | 'last30' | 'mtd' | 'custom';
+
+export interface DashboardDateRange {
+  startDate: ISODate;
+  endDate: ISODate;
+  preset?: DashboardDateRangePreset;
+}
+
+export interface DashboardFilters {
+  dateRange: DashboardDateRange;
+  accountId?: string | null;
+  orderStatuses?: string[];
+}
+
+export type DashboardSummaryKpiId =
+  | 'totalBikes'
+  | 'activeBikes'
+  | 'draftOrders'
+  | 'submittedOrders'
+  | 'orderValueInPeriod'
+  | 'avgOrderValueInPeriod';
+
+export interface DashboardSummaryKpi {
+  id: DashboardSummaryKpiId;
   label: string;
-  /**
-   * Pre-formatted value for UI. Once we plug GraphQL, we can decide whether
-   * formatting belongs server-side, client-side, or both.
-   */
+  value: number;
   displayValue: string;
-  /**
-   * Optional "delta vs previous period" display string, e.g. "+8%" or "-2.1%".
-   */
   displayDelta?: string;
-  /**
-   * Optional helper text for context, e.g. "vs last month".
-   */
   helperText?: string;
 }
 
 export interface DashboardSummary {
-  asOfDateISO: string;
-  kpis: DashboardKpi[];
+  asOf: ISODateTime;
+  filters: DashboardFilters;
+  kpis: DashboardSummaryKpi[];
 }
 
-export type TrendSeriesId = 'orders' | 'revenue';
+export interface CatalogOverview {
+  filters: DashboardFilters;
+  totalBikes: number;
+  activeBikes: number;
+  inactiveBikes: number;
+  brandsRepresented?: number;
+}
 
-export interface DashboardTrendPoint {
-  dateISO: string;
+export interface OrderStatusBucket {
+  status: string;
+  statusValue: string;
+  count: number;
+}
+
+export interface RecentOrderRow {
+  orderId: string;
+  orderName: string;
+  status: string;
+  statusValue: string;
+  accountId: string | null;
+  accountName: string | null;
+  orderDate: ISODate | null;
+  createdDate: ISODateTime;
+  totalAmount: Money | null;
+  displayTotalAmount: DisplayMoney | null;
+}
+
+export interface OrdersOverview {
+  filters: DashboardFilters;
+  byStatus: OrderStatusBucket[];
+  recentOrders: RecentOrderRow[];
+  totals: {
+    orderCount: number;
+    orderValue: Money;
+    displayOrderValue?: DisplayMoney;
+  };
+}
+
+export type TrendMetricId = 'orderCount' | 'orderValue';
+
+export interface TrendPoint {
+  date: ISODate;
   value: number;
 }
 
-export interface DashboardTrendSeries {
-  id: TrendSeriesId;
+export interface TrendSeries {
+  id: TrendMetricId;
   label: string;
-  points: DashboardTrendPoint[];
+  points: TrendPoint[];
 }
 
 export interface DashboardTrends {
-  range: {
-    startDateISO: string;
-    endDateISO: string;
-    granularity: 'day' | 'week' | 'month';
-  };
-  series: DashboardTrendSeries[];
+  filters: DashboardFilters;
+  granularity: 'day' | 'week';
+  series: TrendSeries[];
 }
 
-export interface DashboardOrdersOverview {
-  byStatus: Array<{
-    status: string;
-    count: number;
-  }>;
-  mostRecent: Array<{
-    orderId: string;
-    orderName: string;
-    createdDateISO: string;
-    status: string;
-    displayTotal?: string;
-  }>;
+export interface AccountOrderActivity {
+  accountId: string;
+  accountName: string;
+  orderCountInPeriod: number;
+  lastOrderDate: ISODate | null;
+  lastOrderTotal: Money | null;
+  displayLastOrderTotal?: DisplayMoney;
 }
 
+export interface AccountActivity {
+  filters: DashboardFilters;
+  accountsWithOrders: number;
+  topAccounts: AccountOrderActivity[];
+}
+
+export interface DashboardSnapshot {
+  summary: DashboardSummary;
+  catalog: CatalogOverview;
+  orders: OrdersOverview;
+  trends: DashboardTrends;
+  accounts: AccountActivity;
+}

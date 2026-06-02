@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getDashboardSummary } from '../services/dashboardService';
-import type { DashboardSummary } from '../types/dashboardTypes';
+import type { DashboardFilters, DashboardSummary } from '../types/dashboardTypes';
 
-export function useDashboardSummary() {
+export function useDashboardSummary(filters: DashboardFilters) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export function useDashboardSummary() {
     async function load() {
       try {
         setLoading(true);
-        const data = await getDashboardSummary();
+        const data = await getDashboardSummary(filters);
         if (active) {
           setSummary(data);
           setError(null);
@@ -34,7 +34,7 @@ export function useDashboardSummary() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [filters.dateRange.startDate, filters.dateRange.endDate, filters.accountId]);
 
   return { summary, loading, error };
 }
