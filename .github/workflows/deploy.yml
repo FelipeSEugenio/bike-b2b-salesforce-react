@@ -1,0 +1,50 @@
+name: Deploy to Scratch Org
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Restore JWT key
+        run: |
+          echo "${{ secrets.SF_JWT_KEY_BASE64 }}" | base64 --decode > server.key
+          chmod 600 server.key
+
+      - name: Login with JWT
+        run: |
+          sf org login jwt \
+            --client-id "${{ secrets.SF_CLIENT_ID }}" \
+            --jwt-key-file server.key \
+            --username "${{ secrets.SF_USERNAME }}" \
+            --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
+            --alias deployTarget
+
+      - name: Verify org
+        run: sf org display --target-org deployTarget
+
+      - name: Deploy source
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --target-org deployTarget \
+            --wait 60
