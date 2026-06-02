@@ -23,8 +23,13 @@ interface GraphQLResponse {
 
 export async function fetchOrders(): Promise<Order[]> {
   const data = await executeGraphQL<GraphQLResponse, void>(GET_ORDERS_QUERY);
-  
-  return data.uiapi.query.Bike_Order__c.edges.map(edge => ({
+  const edges = data.uiapi?.query?.Bike_Order__c?.edges;
+
+  if (!edges?.length) {
+    return [];
+  }
+
+  return edges.map((edge) => ({
     id: edge.node.Id,
     name: edge.node.Name.value,
     status: edge.node.Status__c.displayValue || edge.node.Status__c.value,
