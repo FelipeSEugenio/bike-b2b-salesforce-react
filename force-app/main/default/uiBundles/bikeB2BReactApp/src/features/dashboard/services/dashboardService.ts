@@ -1,8 +1,13 @@
 import { executeGraphQL } from '@/shared/api/graphqlClient';
-import { GET_DASHBOARD_BIKES_QUERY } from '../api/dashboardQueries';
+import { GET_DASHBOARD_BIKES_QUERY, GET_DASHBOARD_ORDERS_QUERY } from '../api/dashboardQueries';
 import { BIKE_ORDER_STATUS } from '../constants/orderStatuses';
 import { mapBikeKpiCounts } from '../mappers/mapBikeKpiCounts';
-import { getDefaultDashboardFilters, todayISODate } from '../utils/defaultFilters';
+import {
+  countOrdersByStatus,
+  mapOrdersOverview,
+  type DashboardOrderEdge,
+} from '../mappers/mapOrdersOverview';
+import { getDefaultDashboardFilters } from '../utils/defaultFilters';
 import type {
   AccountActivity,
   CatalogOverview,
@@ -37,21 +42,27 @@ interface DashboardBikesGraphQLResponse {
   };
 }
 
-/** Order-side mock figures until orders GraphQL is wired. */
-const MOCK_METRICS = {
-  totalBikes: 24,
-  activeBikes: 20,
+interface DashboardOrdersGraphQLResponse {
+  uiapi: {
+    query: {
+      Bike_Order__c: {
+        edges: DashboardOrderEdge[];
+      };
+    };
+  };
+}
+
+/** Catalog mock until bike overview uses the same GraphQL source. */
+const MOCK_CATALOG = {
   brandsRepresented: 6,
-  draftOrders: 5,
-  submittedOrders: 4,
-  approvedOrders: 2,
-  fulfilledOrders: 1,
-  orderCountInPeriod: 12,
-  orderValueInPeriod: 124_900,
 };
 
 function resolveFilters(filters?: DashboardFilters): DashboardFilters {
   return filters ?? getDefaultDashboardFilters();
+}
+
+function toDateInput(isoDate: string): { value: string } {
+  return { value: isoDate };
 }
 
 async function fetchBikeKpiCounts(): Promise<{ totalBikes: number; activeBikes: number }> {
@@ -61,14 +72,30 @@ async function fetchBikeKpiCounts(): Promise<{ totalBikes: number; activeBikes: 
   return mapBikeKpiCounts(data.uiapi?.query?.Bike__c?.edges);
 }
 
-function buildSummaryKpis(bikeCounts: {
-  totalBikes: number;
-  activeBikes: number;
-}): DashboardSummaryKpi[] {
+async function fetchOrdersOverviewFromGraphQL(
+  filters: DashboardFilters
+): Promise<OrdersOverview> {
+  const { startDate, endDate } = filters.dateRange;
+  const data = await executeGraphQL<
+    DashboardOrdersGraphQLResponse,
+    { startDate: { value: string }; endDate: { value: string } }
+  >(GET_DASHBOARD_ORDERS_QUERY, {
+    startDate: toDateInput(startDate),
+    endDate: toDateInput(endDate),
+  });
+
+  return mapOrdersOverview(data.uiapi?.query?.Bike_Order__c?.edges, filters);
+}
+
+function buildSummaryKpis(
+  bikeCounts: { totalBikes: number; activeBikes: number },
+  ordersOverview: OrdersOverview
+): DashboardSummaryKpi[] {
   const { totalBikes, activeBikes } = bikeCounts;
-  const { draftOrders, submittedOrders, orderValueInPeriod, orderCountInPeriod } = MOCK_METRICS;
-  const avgOrderValue =
-    orderCountInPeriod > 0 ? Math.round(orderValueInPeriod / orderCountInPeriod) : 0;
+  const draftOrders = countOrdersByStatus(ordersOverview, BIKE_ORDER_STATUS.DRAFT);
+  const submittedOrders = countOrdersByStatus(ordersOverview, BIKE_ORDER_STATUS.SUBMITTED);
+  const { orderCount, orderValue } = ordersOverview.totals;
+  const avgOrderValue = orderCount > 0 ? Math.round(orderValue / orderCount) : 0;
 
   return [
     {
@@ -102,8 +129,8 @@ function buildSummaryKpis(bikeCounts: {
     {
       id: 'orderValueInPeriod',
       label: 'Order value (period)',
-      value: orderValueInPeriod,
-      displayValue: formatMoney(orderValueInPeriod),
+      value: orderValue,
+      displayValue: ordersOverview.totals.displayOrderValue ?? formatMoney(orderValue),
       helperText: 'Sum of Total_Amount__c',
     },
     {
@@ -128,19 +155,19 @@ function lastNDaysISO(n: number): string[] {
   return dates;
 }
 
-/**
- * Dashboard data access boundary.
- * Mocked for now; swap internals with executeGraphQL + mappers without changing hook signatures.
- */
 export async function getDashboardSummary(
   filters?: DashboardFilters
 ): Promise<DashboardSummary> {
   const resolved = resolveFilters(filters);
-  const bikeCounts = await fetchBikeKpiCounts();
+  const [bikeCounts, ordersOverview] = await Promise.all([
+    fetchBikeKpiCounts(),
+    fetchOrdersOverviewFromGraphQL(resolved),
+  ]);
+
   return {
     asOf: new Date().toISOString(),
     filters: resolved,
-    kpis: buildSummaryKpis(bikeCounts),
+    kpis: buildSummaryKpis(bikeCounts, ordersOverview),
   };
 }
 
@@ -148,73 +175,19 @@ export async function getCatalogOverview(
   filters?: DashboardFilters
 ): Promise<CatalogOverview> {
   const resolved = resolveFilters(filters);
-  const { totalBikes, activeBikes, brandsRepresented } = MOCK_METRICS;
+  const bikeCounts = await fetchBikeKpiCounts();
   return {
     filters: resolved,
-    totalBikes,
-    activeBikes,
-    inactiveBikes: totalBikes - activeBikes,
-    brandsRepresented,
+    totalBikes: bikeCounts.totalBikes,
+    activeBikes: bikeCounts.activeBikes,
+    inactiveBikes: bikeCounts.totalBikes - bikeCounts.activeBikes,
+    brandsRepresented: MOCK_CATALOG.brandsRepresented,
   };
 }
 
 export async function getOrdersOverview(filters?: DashboardFilters): Promise<OrdersOverview> {
   const resolved = resolveFilters(filters);
-  const { draftOrders, submittedOrders, approvedOrders, fulfilledOrders, orderValueInPeriod, orderCountInPeriod } =
-    MOCK_METRICS;
-
-  return {
-    filters: resolved,
-    byStatus: [
-      { status: BIKE_ORDER_STATUS.DRAFT, statusValue: BIKE_ORDER_STATUS.DRAFT, count: draftOrders },
-      {
-        status: BIKE_ORDER_STATUS.SUBMITTED,
-        statusValue: BIKE_ORDER_STATUS.SUBMITTED,
-        count: submittedOrders,
-      },
-      {
-        status: BIKE_ORDER_STATUS.APPROVED,
-        statusValue: BIKE_ORDER_STATUS.APPROVED,
-        count: approvedOrders,
-      },
-      {
-        status: BIKE_ORDER_STATUS.FULFILLED,
-        statusValue: BIKE_ORDER_STATUS.FULFILLED,
-        count: fulfilledOrders,
-      },
-    ],
-    recentOrders: [
-      {
-        orderId: 'mock-001',
-        orderName: 'BO-0001',
-        status: BIKE_ORDER_STATUS.SUBMITTED,
-        statusValue: BIKE_ORDER_STATUS.SUBMITTED,
-        accountId: '001mockacme',
-        accountName: 'Acme Bikes',
-        orderDate: todayISODate(),
-        createdDate: new Date().toISOString(),
-        totalAmount: 4280,
-        displayTotalAmount: '$4,280.00',
-      },
-      {
-        orderId: 'mock-002',
-        orderName: 'BO-0002',
-        status: BIKE_ORDER_STATUS.DRAFT,
-        statusValue: BIKE_ORDER_STATUS.DRAFT,
-        accountId: null,
-        accountName: null,
-        orderDate: todayISODate(),
-        createdDate: new Date(Date.now() - 86_400_000).toISOString(),
-        totalAmount: 1120,
-        displayTotalAmount: '$1,120.00',
-      },
-    ],
-    totals: {
-      orderCount: orderCountInPeriod,
-      orderValue: orderValueInPeriod,
-      displayOrderValue: formatMoney(orderValueInPeriod),
-    },
-  };
+  return fetchOrdersOverviewFromGraphQL(resolved);
 }
 
 export async function getDashboardTrends(filters?: DashboardFilters): Promise<DashboardTrends> {
@@ -256,7 +229,7 @@ export async function getAccountActivity(filters?: DashboardFilters): Promise<Ac
         accountId: '001mockacme',
         accountName: 'Acme Bikes',
         orderCountInPeriod: 4,
-        lastOrderDate: todayISODate(),
+        lastOrderDate: resolved.dateRange.endDate,
         lastOrderTotal: 4280,
         displayLastOrderTotal: '$4,280.00',
       },
@@ -264,7 +237,7 @@ export async function getAccountActivity(filters?: DashboardFilters): Promise<Ac
         accountId: '001mockglobex',
         accountName: 'Globex Cycling',
         orderCountInPeriod: 2,
-        lastOrderDate: todayISODate(),
+        lastOrderDate: resolved.dateRange.endDate,
         lastOrderTotal: 2150,
         displayLastOrderTotal: '$2,150.00',
       },
@@ -272,7 +245,6 @@ export async function getAccountActivity(filters?: DashboardFilters): Promise<Ac
   };
 }
 
-/** Optional orchestrator for a single dashboard load (GraphQL phase). */
 export async function getDashboardSnapshot(
   filters?: DashboardFilters
 ): Promise<DashboardSnapshot> {
