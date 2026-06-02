@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getDashboardSummary,
+  getDashboardTrends,
   getOrdersOverview,
 } from './dashboardService';
 import { executeGraphQL } from '@/shared/api/graphqlClient';
@@ -92,5 +93,14 @@ describe('dashboardService', () => {
       orderName: 'BO-0002',
       statusValue: BIKE_ORDER_STATUS.SUBMITTED,
     });
+  });
+
+  it('getDashboardTrends builds series from the same orders query', async () => {
+    const trends = await getDashboardTrends(filters);
+
+    expect(mockExecuteGraphQL).toHaveBeenCalledTimes(1);
+    expect(trends.series.map((s) => s.id)).toEqual(['orderCount', 'orderValue']);
+    const orderCount = trends.series.find((s) => s.id === 'orderCount');
+    expect(orderCount?.points.some((p) => p.value > 0)).toBe(true);
   });
 });

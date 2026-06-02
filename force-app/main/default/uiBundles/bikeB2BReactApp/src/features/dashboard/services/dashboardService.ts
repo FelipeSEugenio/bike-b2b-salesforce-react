@@ -2,6 +2,7 @@ import { executeGraphQL } from '@/shared/api/graphqlClient';
 import { GET_DASHBOARD_BIKES_QUERY, GET_DASHBOARD_ORDERS_QUERY } from '../api/dashboardQueries';
 import { BIKE_ORDER_STATUS } from '../constants/orderStatuses';
 import { mapBikeKpiCounts } from '../mappers/mapBikeKpiCounts';
+import { mapDashboardTrends } from '../mappers/mapDashboardTrends';
 import {
   countOrdersByStatus,
   mapOrdersOverview,
@@ -72,9 +73,9 @@ async function fetchBikeKpiCounts(): Promise<{ totalBikes: number; activeBikes: 
   return mapBikeKpiCounts(data.uiapi?.query?.Bike__c?.edges);
 }
 
-async function fetchOrdersOverviewFromGraphQL(
+async function fetchDashboardOrderEdges(
   filters: DashboardFilters
-): Promise<OrdersOverview> {
+): Promise<DashboardOrderEdge[]> {
   const { startDate, endDate } = filters.dateRange;
   const data = await executeGraphQL<
     DashboardOrdersGraphQLResponse,
@@ -84,7 +85,14 @@ async function fetchOrdersOverviewFromGraphQL(
     endDate: toDateInput(endDate),
   });
 
-  return mapOrdersOverview(data.uiapi?.query?.Bike_Order__c?.edges, filters);
+  return data.uiapi?.query?.Bike_Order__c?.edges ?? [];
+}
+
+async function fetchOrdersOverviewFromGraphQL(
+  filters: DashboardFilters
+): Promise<OrdersOverview> {
+  const edges = await fetchDashboardOrderEdges(filters);
+  return mapOrdersOverview(edges, filters);
 }
 
 function buildSummaryKpis(
@@ -143,18 +151,6 @@ function buildSummaryKpis(
   ];
 }
 
-function lastNDaysISO(n: number): string[] {
-  const dates: string[] = [];
-  const base = new Date();
-  base.setHours(0, 0, 0, 0);
-  for (let i = n - 1; i >= 0; i -= 1) {
-    const d = new Date(base);
-    d.setDate(base.getDate() - i);
-    dates.push(d.toISOString().slice(0, 10));
-  }
-  return dates;
-}
-
 export async function getDashboardSummary(
   filters?: DashboardFilters
 ): Promise<DashboardSummary> {
@@ -192,30 +188,8 @@ export async function getOrdersOverview(filters?: DashboardFilters): Promise<Ord
 
 export async function getDashboardTrends(filters?: DashboardFilters): Promise<DashboardTrends> {
   const resolved = resolveFilters(filters);
-  const dates = lastNDaysISO(14);
-
-  return {
-    filters: resolved,
-    granularity: 'day',
-    series: [
-      {
-        id: 'orderCount',
-        label: 'Orders',
-        points: dates.map((date, idx) => ({
-          date,
-          value: 2 + (idx % 4),
-        })),
-      },
-      {
-        id: 'orderValue',
-        label: 'Order value',
-        points: dates.map((date, idx) => ({
-          date,
-          value: 8000 + idx * 650,
-        })),
-      },
-    ],
-  };
+  const edges = await fetchDashboardOrderEdges(resolved);
+  return mapDashboardTrends(edges, resolved);
 }
 
 export async function getAccountActivity(filters?: DashboardFilters): Promise<AccountActivity> {

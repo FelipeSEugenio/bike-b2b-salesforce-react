@@ -34,7 +34,7 @@ function formatMoney(value: number): string {
   return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
 
-function toOrderDateISO(node: DashboardOrderNode): string | null {
+export function toOrderDateISO(node: DashboardOrderNode): string | null {
   const orderDate = node.Order_Date__c?.value;
   if (orderDate) {
     return orderDate.slice(0, 10);
