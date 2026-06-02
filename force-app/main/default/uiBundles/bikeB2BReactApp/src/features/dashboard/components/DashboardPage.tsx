@@ -5,7 +5,7 @@ import { useDashboardTrends } from '../hooks/useDashboardTrends';
 import { useOrdersOverview } from '../hooks/useOrdersOverview';
 import { useAccountActivity } from '../hooks/useAccountActivity';
 import DashboardKpiCard from './DashboardKpiCard';
-import DashboardChartPlaceholder from './DashboardChartPlaceholder';
+import DashboardTrendChart from './DashboardTrendChart';
 import DashboardFiltersPanel from './DashboardFiltersPanel';
 import DashboardRecentOrdersTable from './DashboardRecentOrdersTable';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -30,7 +30,7 @@ const DashboardPage: React.FC = () => {
       <header className="border-b border-border pb-4">
         <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Dashboard</h1>
         <p className="mt-1.5 text-muted-foreground text-sm">
-          B2B operational view — bikes, orders, and account activity.
+          Comprehensive overview of bikes, orders, and key account activities.
         </p>
         {summary?.asOf && (
           <p className="mt-1 text-xs text-muted-foreground">
@@ -75,8 +75,8 @@ const DashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {trendsLoading ? (
                 <>
-                  <DashboardChartPlaceholder series={null} loading />
-                  <DashboardChartPlaceholder series={null} loading />
+                  <DashboardTrendChart series={null} loading />
+                  <DashboardTrendChart series={null} loading />
                 </>
               ) : trendsError ? (
                 <div className="col-span-full rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive font-medium">
@@ -88,7 +88,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               ) : (
                 trends?.series.map((series) => (
-                  <DashboardChartPlaceholder key={series.id} series={series} />
+                  <DashboardTrendChart key={series.id} series={series} />
                 ))
               )}
             </div>

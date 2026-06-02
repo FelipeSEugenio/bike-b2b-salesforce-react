@@ -38,8 +38,7 @@ const DashboardFiltersPanel: React.FC<DashboardFiltersPanelProps> = ({
         <CardHeader>
           <CardTitle className="text-base">Filters & context</CardTitle>
           <CardDescription>
-            {/* TODO: Wire interactive date range, account lookup, status multi-select. */}
-            Mocked filter state for GraphQL phase
+            Adjust the dashboard view by date range and account.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

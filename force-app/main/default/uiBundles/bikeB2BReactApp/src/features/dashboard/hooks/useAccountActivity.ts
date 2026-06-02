@@ -34,7 +34,7 @@ export function useAccountActivity(filters: DashboardFilters) {
     return () => {
       active = false;
     };
-  }, [filters.dateRange.startDate, filters.dateRange.endDate, filters.accountId]);
+  }, [filters]);
 
   return { accountActivity, loading, error };
 }
