@@ -1,4 +1,7 @@
+import { executeGraphQL } from '@/shared/api/graphqlClient';
+import { GET_DASHBOARD_BIKES_QUERY } from '../api/dashboardQueries';
 import { BIKE_ORDER_STATUS } from '../constants/orderStatuses';
+import { mapBikeKpiCounts } from '../mappers/mapBikeKpiCounts';
 import { getDefaultDashboardFilters, todayISODate } from '../utils/defaultFilters';
 import type {
   AccountActivity,
@@ -19,7 +22,22 @@ function formatMoney(value: number): string {
   return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
 
-/** Shared mock figures — replace with GraphQL aggregation in the next phase. */
+interface DashboardBikesGraphQLResponse {
+  uiapi: {
+    query: {
+      Bike__c: {
+        edges: Array<{
+          node: {
+            Id: string;
+            Is_Active__c?: { value: boolean | null } | null;
+          };
+        }>;
+      };
+    };
+  };
+}
+
+/** Order-side mock figures until orders GraphQL is wired. */
 const MOCK_METRICS = {
   totalBikes: 24,
   activeBikes: 20,
@@ -36,9 +54,19 @@ function resolveFilters(filters?: DashboardFilters): DashboardFilters {
   return filters ?? getDefaultDashboardFilters();
 }
 
-function buildSummaryKpis(): DashboardSummaryKpi[] {
-  const { totalBikes, activeBikes, draftOrders, submittedOrders, orderValueInPeriod, orderCountInPeriod } =
-    MOCK_METRICS;
+async function fetchBikeKpiCounts(): Promise<{ totalBikes: number; activeBikes: number }> {
+  const data = await executeGraphQL<DashboardBikesGraphQLResponse, void>(
+    GET_DASHBOARD_BIKES_QUERY
+  );
+  return mapBikeKpiCounts(data.uiapi?.query?.Bike__c?.edges);
+}
+
+function buildSummaryKpis(bikeCounts: {
+  totalBikes: number;
+  activeBikes: number;
+}): DashboardSummaryKpi[] {
+  const { totalBikes, activeBikes } = bikeCounts;
+  const { draftOrders, submittedOrders, orderValueInPeriod, orderCountInPeriod } = MOCK_METRICS;
   const avgOrderValue =
     orderCountInPeriod > 0 ? Math.round(orderValueInPeriod / orderCountInPeriod) : 0;
 
@@ -108,10 +136,11 @@ export async function getDashboardSummary(
   filters?: DashboardFilters
 ): Promise<DashboardSummary> {
   const resolved = resolveFilters(filters);
+  const bikeCounts = await fetchBikeKpiCounts();
   return {
     asOf: new Date().toISOString(),
     filters: resolved,
-    kpis: buildSummaryKpis(),
+    kpis: buildSummaryKpis(bikeCounts),
   };
 }
 
