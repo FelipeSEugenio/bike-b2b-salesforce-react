@@ -3,6 +3,7 @@ import { GET_DASHBOARD_BIKES_QUERY, GET_DASHBOARD_ORDERS_QUERY } from '../api/da
 import { BIKE_ORDER_STATUS } from '../constants/orderStatuses';
 import { mapBikeKpiCounts } from '../mappers/mapBikeKpiCounts';
 import { mapDashboardTrends } from '../mappers/mapDashboardTrends';
+import { mapAccountActivity } from '../mappers/mapAccountActivity';
 import {
   countOrdersByStatus,
   mapOrdersOverview,
@@ -111,42 +112,42 @@ function buildSummaryKpis(
       label: 'Total bikes',
       value: totalBikes,
       displayValue: formatCount(totalBikes),
-      helperText: 'Bike__c catalog',
+      helperText: 'Total bikes in catalog',
     },
     {
       id: 'activeBikes',
       label: 'Active bikes',
       value: activeBikes,
       displayValue: formatCount(activeBikes),
-      helperText: 'Is_Active__c = true',
+      helperText: 'Currently active and sellable',
     },
     {
       id: 'draftOrders',
       label: 'Draft orders',
       value: draftOrders,
       displayValue: formatCount(draftOrders),
-      helperText: `Status ${BIKE_ORDER_STATUS.DRAFT}`,
+      helperText: 'Orders pending submission',
     },
     {
       id: 'submittedOrders',
       label: 'Submitted orders',
       value: submittedOrders,
       displayValue: formatCount(submittedOrders),
-      helperText: `Status ${BIKE_ORDER_STATUS.SUBMITTED}`,
+      helperText: 'Orders awaiting review',
     },
     {
       id: 'orderValueInPeriod',
       label: 'Order value (period)',
       value: orderValue,
       displayValue: ordersOverview.totals.displayOrderValue ?? formatMoney(orderValue),
-      helperText: 'Sum of Total_Amount__c',
+      helperText: 'Gross value for selected period',
     },
     {
       id: 'avgOrderValueInPeriod',
       label: 'Avg order value',
       value: avgOrderValue,
       displayValue: formatMoney(avgOrderValue),
-      helperText: 'In selected date range',
+      helperText: 'Average value per order',
     },
   ];
 }
@@ -194,29 +195,8 @@ export async function getDashboardTrends(filters?: DashboardFilters): Promise<Da
 
 export async function getAccountActivity(filters?: DashboardFilters): Promise<AccountActivity> {
   const resolved = resolveFilters(filters);
-
-  return {
-    filters: resolved,
-    accountsWithOrders: 3,
-    topAccounts: [
-      {
-        accountId: '001mockacme',
-        accountName: 'Acme Bikes',
-        orderCountInPeriod: 4,
-        lastOrderDate: resolved.dateRange.endDate,
-        lastOrderTotal: 4280,
-        displayLastOrderTotal: '$4,280.00',
-      },
-      {
-        accountId: '001mockglobex',
-        accountName: 'Globex Cycling',
-        orderCountInPeriod: 2,
-        lastOrderDate: resolved.dateRange.endDate,
-        lastOrderTotal: 2150,
-        displayLastOrderTotal: '$2,150.00',
-      },
-    ],
-  };
+  const edges = await fetchDashboardOrderEdges(resolved);
+  return mapAccountActivity(edges, resolved);
 }
 
 export async function getDashboardSnapshot(

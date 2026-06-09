@@ -34,7 +34,7 @@ export function useDashboardSummary(filters: DashboardFilters) {
     return () => {
       active = false;
     };
-  }, [filters.dateRange.startDate, filters.dateRange.endDate, filters.accountId]);
+  }, [filters]);
 
   return { summary, loading, error };
 }

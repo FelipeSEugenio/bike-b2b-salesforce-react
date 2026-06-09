@@ -7,17 +7,22 @@ import {
   CardTitle,
 } from '@/shared/components/ui/card';
 import { Label } from '@/shared/components/ui/label';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import { DASHBOARD_FILTER_STATUS_OPTIONS } from '../constants/orderStatuses';
 import type { AccountActivity, DashboardFilters } from '../types/dashboardTypes';
 
 interface DashboardFiltersPanelProps {
   filters: DashboardFilters;
   accountActivity: AccountActivity | null;
+  accountsLoading?: boolean;
+  accountsError?: string | null;
 }
 
 const DashboardFiltersPanel: React.FC<DashboardFiltersPanelProps> = ({
   filters,
   accountActivity,
+  accountsLoading,
+  accountsError,
 }) => {
   const { dateRange } = filters;
   const dateLabel =
@@ -33,8 +38,7 @@ const DashboardFiltersPanel: React.FC<DashboardFiltersPanelProps> = ({
         <CardHeader>
           <CardTitle className="text-base">Filters & context</CardTitle>
           <CardDescription>
-            {/* TODO: Wire interactive date range, account lookup, status multi-select. */}
-            Mocked filter state for GraphQL phase
+            Adjust the dashboard view by date range and account.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -72,16 +76,34 @@ const DashboardFiltersPanel: React.FC<DashboardFiltersPanelProps> = ({
         </CardContent>
       </Card>
 
-      {accountActivity && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Account activity</CardTitle>
-            <CardDescription>
-              {accountActivity.accountsWithOrders} accounts with orders in period
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Account activity</CardTitle>
+          {accountsLoading ? (
+            <Skeleton className="h-4 w-32" />
+          ) : accountsError ? (
+            <CardDescription className="text-destructive text-xs">
+              Error loading activity
             </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {accountActivity.topAccounts.map((account) => (
+          ) : (
+            <CardDescription>
+              {accountActivity?.accountsWithOrders ?? 0} accounts with orders in period
+            </CardDescription>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {accountsLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ) : accountsError ? (
+            <p className="text-xs text-muted-foreground italic">Could not load account data.</p>
+          ) : !accountActivity || accountActivity.topAccounts.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">No account activity for this period.</p>
+          ) : (
+            accountActivity.topAccounts.map((account) => (
               <div
                 key={account.accountId}
                 className="flex justify-between gap-2 text-xs border-b border-border pb-2 last:border-0 last:pb-0"
@@ -94,10 +116,10 @@ const DashboardFiltersPanel: React.FC<DashboardFiltersPanelProps> = ({
                   {account.displayLastOrderTotal ?? account.lastOrderTotal}
                 </span>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+            ))
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
