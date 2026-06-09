@@ -9,6 +9,9 @@ import DashboardTrendChart from './DashboardTrendChart';
 import DashboardFiltersPanel from './DashboardFiltersPanel';
 import DashboardRecentOrdersTable from './DashboardRecentOrdersTable';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import type { TrendMetricId } from '../types/dashboardTypes';
+
+const TREND_CHART_IDS: TrendMetricId[] = ['orderCount', 'orderValue'];
 
 const DashboardPage: React.FC = () => {
   const { filters } = useDashboardFilters();
@@ -73,24 +76,19 @@ const DashboardPage: React.FC = () => {
               Trends
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {trendsLoading ? (
-                <>
-                  <DashboardTrendChart series={null} loading />
-                  <DashboardTrendChart series={null} loading />
-                </>
-              ) : trendsError ? (
-                <div className="col-span-full rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive font-medium">
-                  Failed to load trends: {trendsError}
-                </div>
-              ) : trends?.series.length === 0 ? (
-                <div className="col-span-full rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                  No trend data available for this period.
-                </div>
-              ) : (
-                trends?.series.map((series) => (
-                  <DashboardTrendChart key={series.id} series={series} />
-                ))
-              )}
+              {trendsLoading
+                ? TREND_CHART_IDS.map((chartId) => (
+                    <DashboardTrendChart key={chartId} chartId={chartId} series={null} loading />
+                  ))
+                : TREND_CHART_IDS.map((chartId) => (
+                    <DashboardTrendChart
+                      key={chartId}
+                      chartId={chartId}
+                      series={trends?.series.find((item) => item.id === chartId) ?? null}
+                      granularity={trends?.granularity}
+                      error={trendsError}
+                    />
+                  ))}
             </div>
 
             <div aria-label="Recent orders" className="pt-4">

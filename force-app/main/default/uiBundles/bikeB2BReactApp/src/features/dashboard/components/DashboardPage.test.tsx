@@ -48,7 +48,18 @@ describe('DashboardPage', () => {
       trends: {
         filters,
         granularity: 'day',
-        series: [{ id: 'orderCount', label: 'Orders', points: [] }],
+        series: [
+          {
+            id: 'orderCount',
+            label: 'Orders',
+            points: [{ date: '2026-06-01', value: 3 }],
+          },
+          {
+            id: 'orderValue',
+            label: 'Order value',
+            points: [{ date: '2026-06-01', value: 1200 }],
+          },
+        ],
       },
       loading: false,
       error: null,
