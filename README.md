@@ -1,290 +1,219 @@
-# B2B Bike Catalog on Salesforce (React + GraphQL UI API)
+# 🚴 Bike B2B Sales App — React + GraphQL UI API
 
-A React uiBundle application running natively on Salesforce Multi-Framework, providing a B2B bike catalog and order flow powered entirely by the Salesforce GraphQL UI API — no Apex required.
+> A production-style Salesforce application built with React, TypeScript, and the Salesforce GraphQL UI API — **zero Apex required.**
 
----
+🇧🇷 Português: [README-ptbr.md](./README-ptbr.md)
 
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Features](#features)
-4. [Design System & Theming](#design-system--theming)
-5. [Responsive Layouts](#responsive-layouts)
-6. [Screenshots](#screenshots)
-7. [Getting Started](#getting-started)
-8. [Development & Branching](#development--branching)
-9. [Future Work](#future-work)
-10. [License / Credits](#license--credits)
+![Salesforce](https://img.shields.io/badge/Salesforce-Multi--Framework-00A1E0?style=for-the-badge&logo=salesforce&logoColor=white)
+![React](https://img.shields.io/badge/React-TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![GraphQL](https://img.shields.io/badge/GraphQL-UI_API-E10098?style=for-the-badge&logo=graphql&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Dark_Mode-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-Build_Tool-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
 
 ---
 
-## Overview
+## 🧠 Project Overview
 
-The **B2B Bike Catalog** app is a modern, production-style Salesforce application built as a **React uiBundle** running inside the **Salesforce Multi-Framework / Agentforce 360** runtime. It allows B2B sales representatives and buyers to:
+The **Bike B2B Sales App** is a full-featured Salesforce application that runs as a **React uiBundle** inside the **Salesforce Multi-Framework / Agentforce 360** runtime. Built as a **portfolio-grade project**, it demonstrates what a modern, framework-native UI looks like on Salesforce — replacing traditional Apex-driven patterns with declarative GraphQL data access and a custom design system.
 
-- Browse a catalog of bike models (`Bike__c`) with search and brand filtering.
-- Build draft purchase orders by selecting products and quantities.
-- Associate orders with Salesforce Accounts via a live lookup.
-- Track and manage orders (`Bike_Order__c`) through their lifecycle.
+Sales representatives and B2B buyers can:
 
-**Tech stack at a glance:**
-
-| Layer      | Technology                                           |
-| ---------- | ---------------------------------------------------- |
-| Frontend   | React (TypeScript)                                   |
-| Runtime    | Salesforce Multi-Framework uiBundle                  |
-| Data       | Salesforce GraphQL UI API via `@salesforce/sdk-data` |
-| Styling    | Tailwind CSS (custom design tokens, dark mode)       |
-| Validation | Salesforce Record-Triggered Flow                     |
-| Build      | Vite / npm                                           |
-
-This project is designed as a **portfolio-quality example** of what a modern, framework-native UI looks like on Salesforce — demonstrating GraphQL data access, custom design systems, and responsive layout without a single line of Apex.
+- 🔍 **Browse** a live product catalog with real-time search and brand filtering
+- 🛒 **Build** draft orders with per-line quantity controls and a floating order panel
+- 🔗 **Link** orders to Salesforce Accounts via a live lookup
+- 📊 **Track** orders through their lifecycle with a status dashboard
+- ✅ **Submit** orders through server-side Flow validation — no Apex needed
 
 ---
 
-## Architecture
+## 💼 Business Scenario
+
+A bicycle distributor needs a Salesforce-based solution to modernize their B2B sales operations and move away from manual spreadsheet processes.
+
+Their sales team needs to:
+
+- Browse an internal product catalog in real time
+- Build purchase orders on behalf of client accounts
+- Submit orders with built-in data validation
+- Monitor order statuses at a glance via a centralized dashboard
+
+This project simulates that full workflow inside a Salesforce org, using only the platform's native GraphQL UI API and declarative automation — with no custom Apex backend.
+
+---
+
+## ⚡ Tech Stack
+
+| Layer           | Technology                                           |
+| --------------- | ---------------------------------------------------- |
+| **Frontend**    | React (TypeScript)                                   |
+| **Runtime**     | Salesforce Multi-Framework uiBundle                  |
+| **Data Access** | Salesforce GraphQL UI API via `@salesforce/sdk-data` |
+| **Styling**     | Tailwind CSS (custom design tokens, dark mode)       |
+| **Validation**  | Salesforce Record-Triggered Flow                     |
+| **Build Tool**  | Vite / npm                                           |
+
+---
+
+## 🏗️ Architecture
 
 ### Salesforce Multi-Framework uiBundle
 
-The app runs as a **uiBundle** deployed to a Salesforce org, making it available inside the App Launcher or an Experience Cloud site. The Multi-Framework runtime handles bootstrapping, authentication context, and SDK injection — the React app simply consumes the platform-provided SDK APIs.
+The app is deployed as a **uiBundle** to a Salesforce org and exposed via the App Launcher or an Experience Cloud site. The Multi-Framework runtime handles bootstrapping, authentication context, and SDK injection — the React app consumes platform-provided SDK APIs directly.
 
-### Data Layer — GraphQL UI API (No Apex)
+### 🔌 Data Layer — GraphQL UI API (No Apex)
 
-All data access goes through the **Salesforce GraphQL UI API**, accessed via `@salesforce/sdk-data`. There is no Apex controller involved at any point in the data flow.
+All data access flows through the **Salesforce GraphQL UI API** via `@salesforce/sdk-data`. There is no Apex controller at any point in the data flow.
 
-- **`src/api/graphqlClient.ts`** is the single typed gateway for all GraphQL operations. It:
-  - Initializes the SDK with `createDataSDK()`.
-  - Executes queries and mutations via `sdk.graphql`.
-  - Unwraps `response.data` and surfaces typed errors when `response.errors` is present or `data` is missing.
+```
+React Components
+      │
+      ▼
+  Custom Hooks  (useBikeCatalog, useOrders)
+      │
+      ▼
+  graphqlClient.ts  ←  createDataSDK()
+      │
+      ▼
+  Salesforce GraphQL UI API
+      │
+      ▼
+  Bike__c  /  Bike_Order__c  /  Account
+```
 
-- **`src/api/queries.ts`** centralizes all GraphQL query and mutation strings:
-  - `GET_BIKES_QUERY` — fetches `Bike__c` records via `uiapi { query { Bike__c { edges { node { ... } } } } }`.
-  - `SEARCH_ACCOUNTS_QUERY` — searches `Account` by `Name` for the order's account lookup field.
-  - `GET_ORDERS_QUERY` — lists `Bike_Order__c` records with status, linked account, total, and creation date.
-  - Order mutations use the UI API's object-specific mutation pattern (`Bike_Order__cCreate` with `Bike_Order__cCreateInput`), consistent with the `UIAPIMutations` schema.
+- **`src/api/graphqlClient.ts`** — single typed gateway for all GraphQL operations. Initializes the SDK, executes queries/mutations, unwraps `response.data`, and surfaces typed errors.
+- **`src/api/queries.ts`** — centralizes all query and mutation strings (`GET_BIKES_QUERY`, `SEARCH_ACCOUNTS_QUERY`, `GET_ORDERS_QUERY`, order mutations via `Bike_Order__cCreate`).
+- **`src/services/bikeService.ts`** — exposes `useBikeCatalog`, mapping raw UI API edges/nodes into clean `Bike` domain types and returning `{ bikes, loading, error }`.
 
-### Services and Hooks
+### 🛡️ Server-Side Validation — Record-Triggered Flow
 
-- **`src/services/bikeService.ts`** exposes a `useBikeCatalog` hook that:
-  - Calls `executeGraphQL(GET_BIKES_QUERY)`.
-  - Maps raw UI API edges/nodes into a clean `Bike` domain type with fields: `id`, `name`, `model`, `brand`, `price`, `displayPrice`, and `imageUrl`.
-  - Returns `{ bikes, loading, error }` for consumption by UI components, keeping data-fetching logic completely separate from rendering.
+A **Record-Triggered Flow** (`Bike_Order_Validate_Submitted`) acts as the server-side guardrail for order submissions:
 
-### Server-Side Validation — Record-Triggered Flow
+| Condition                                                   | Result                                         |
+| ----------------------------------------------------------- | ---------------------------------------------- |
+| `Status__c = "Submitted"` AND `Account__c` is **blank**     | ❌ Save blocked with user-facing error message |
+| `Status__c = "Submitted"` AND `Account__c` is **populated** | ✅ Save proceeds normally                      |
 
-A **Record-Triggered Flow** named `Bike_Order_Validate_Submitted` (API name: `Bike_Order_Validate_Submitted`) acts as the server-side guardrail for order submissions:
-
-- **Trigger:** on create or update of `Bike_Order__c`, only when the record is updated to meet the entry condition `Status__c = "Submitted"`.
-- **Logic:** if `Account__c` is blank at submission time, the Flow blocks the save with the user-facing message: `You must select an Account before submitting the order.`
-- If `Account__c` is populated, the save proceeds normally.
-- The Flow does not create extra records, does not manage stock, and does not invoke Apex — it is a pure declarative validation layer.
-
----
-
-## Features
-
-### Bike Catalog
-
-- **Search & Filter:** real-time filtering by name/model text and by brand using a dropdown. Filters work together.
-- **Product Table:** displays bike image, name, model, brand, and formatted price per row.
-- **Add to Order:** each row has an "Add to order" button that adds the item to the live Draft Order panel, with quantity controls.
-
-### Order Creation
-
-- **Draft Order Panel:** a floating sidebar on the Catalog page shows items in progress, a quantity control per line, an account lookup field, and the running total.
-- **Account Lookup:** searches Salesforce `Account` records in real time; the selected account is stored on the order.
-- **GraphQL Mutations:** submitting the draft creates a `Bike_Order__c` record (and associated line items) via the GraphQL UI API.
-- **Flow Validation:** if an order is submitted without an Account, the Salesforce Flow blocks the record save and surfaces the validation error back to the UI.
-
-### Orders View
-
-- A list of all `Bike_Order__c` records for the current context, showing order number, status badge, account name, total value, and creation date.
-- Status is displayed as a styled badge (e.g., `Draft`, `Submitted`).
-
-### Design System
-
-- Full light and dark theme support.
-- Responsive layouts tailored for desktop and mobile use cases.
-- Tailwind CSS-based component library with consistent design tokens.
+Pure declarative validation — no Apex, no extra records, no side effects.
 
 ---
 
-## Design System & Theming
+## ✨ Features
 
-### Design Philosophy
+### 🚴 Bike Catalog
 
-The app uses a **corporate-tech aesthetic**: clean whites and light grays in light mode; deep navy/slate backgrounds in dark mode. The goal is to feel native to a professional B2B tool, while being visually distinctive from generic Salesforce Lightning styling.
+- **Real-time search & filter** — filter by name/model text and brand dropdown simultaneously
+- **Product table** — bike image, name, model, brand, and formatted price per row
+- **Add to order** — one-click addition to the live Draft Order panel with quantity controls
 
-### Design Tokens
+### 🛒 Order Creation
 
-Tokens are configured via Tailwind's theme extension and CSS custom properties in `global.css`. They are organized semantically, not by raw hex values:
+- **Draft Order Panel** — floating sidebar on desktop showing live line items, quantity controls, account lookup, and running total
+- **Account Lookup** — live search against Salesforce `Account` records; selection stored on the order
+- **GraphQL Mutations** — submitting the draft creates a `Bike_Order__c` record via the GraphQL UI API
+- **Flow Validation** — submission without an Account is blocked by the Record-Triggered Flow, with the error surfaced back to the UI
 
-**Colors:**
+### 📊 Orders Dashboard
 
-| Token                          | Purpose                                                      |
-| ------------------------------ | ------------------------------------------------------------ |
-| `bg-body`                      | Page-level background                                        |
-| `bg-surface`                   | Cards, tables, panels                                        |
-| `color-primary`                | Main CTAs, buttons, active nav links (blue)                  |
-| `color-accent`                 | Highlights, badges, secondary actions (amber/secondary blue) |
-| `color-border` / `color-muted` | Borders, secondary text, subtle UI dividers                  |
-| `color-success`                | Positive status indicators                                   |
-| `color-error`                  | Validation errors, destructive actions                       |
-| `color-warning`                | Caution states                                               |
+- **KPI cards** — at-a-glance totals for orders by status (Draft, Submitted, etc.)
+- **Order list** — `Bike_Order__c` records with order number, status badge, account name, total value, and creation date
+- **Status badges** — styled visual indicators per order state
+- **Light & dark mode** — full theme support across all dashboard components
 
-**Spacing:** 4-point scale (multiples of 4px), mapped directly to Tailwind's default spacing scale (`p-4` = 16px, `p-2` = 8px, etc.).
+### 🎨 Design System
 
-**Border Radius:**
-
-- `rounded-md` for form controls and inputs.
-- `rounded-lg` for cards and elevated panels.
-
-**Shadows:** card-level elevation using `shadow-sm` (default) and `shadow-md` for hover and active states.
-
-**Typography:**
-
-- Page titles: `text-2xl font-bold` or `text-3xl font-bold`.
-- Section titles / card headings: `text-lg font-semibold`.
-- Body text: `text-sm` or `text-base` with `text-muted` for secondary content.
-
-### Dark Mode Implementation
-
-Dark mode uses Tailwind's **`darkMode: 'class'`** strategy:
-
-1. A toggle button in `Header.tsx` switches between light and dark themes.
-2. On toggle, a `.dark` class is added to or removed from the root `<html>` element.
-3. The user's preference is persisted to `localStorage` so it survives page reloads.
-4. On first load, if no preference is stored, the app falls back to the **device/system preference** via `prefers-color-scheme`.
-5. All components use `dark:` Tailwind variants alongside base classes, ensuring every surface, text, border, and interactive element adapts correctly.
-
-For a deeper breakdown of the color palette and theming decisions, see [`walkthrough.md`](./walkthrough.md) in the repository.
+- Full **light and dark theme** with `localStorage` persistence and system preference fallback
+- **Responsive layouts** — table-to-card switch at `md` breakpoint for mobile-first compatibility
+- **Tailwind CSS design tokens** — semantic color palette, 4-point spacing scale, consistent elevation and typography
 
 ---
 
-## Responsive Layouts
+## 🖼️ Screenshots
 
-The app is built and tested across mobile, tablet, and desktop breakpoints.
-
-### Catalog and Orders — Table to Card Switch
-
-- **Desktop (≥ `md`):** the Bike Catalog and Orders views render as standard table layouts with a fixed header row and data rows, optimized for wide screens where multiple columns fit comfortably.
-- **Mobile (< `md`):** tables switch to **card-style layouts** where each record becomes a stacked card. This is implemented using `md:hidden` / `md:flex` (and equivalent) patterns to swap between table rows and card blocks depending on breakpoint.
-
-### Filters and Side Panels
-
-- **Mobile:** filter inputs (search, brand dropdown) stack **vertically**, one per row, for comfortable touch interaction.
-- **Desktop:** filters arrange as a horizontal **grid/columns**, keeping all filter controls visible at a glance without requiring scrolling.
-
-### Overall Layout
-
-- The `Header` is always full-width with a nav bar that collapses gracefully.
-- The Catalog page's Draft Order panel is positioned as a fixed sidebar on desktop and transitions to an inline/bottom panel on smaller screens.
-- All paddings, gaps, and font sizes use responsive Tailwind utilities to ensure comfortable reading and interaction at every viewport size.
-
----
-
-## Screenshots
-
-> Screenshots are stored in `./docs/screenshots`.
-
-### Catalog – Light Mode (Desktop)
+### 🗂️ Catalog — Light Mode
 
 ![Catalog Light Mode](./docs/screenshots/Catalog%20%E2%80%93%20Light%20Mode.png)
 
-### Catalog – Dark Mode (Desktop)
+### 🌙 Catalog — Dark Mode
 
 ![Catalog Dark Mode](./docs/screenshots/Catalog%20%E2%80%93%20Dark%20Mode.png)
 
-### Orders – Light Mode (Desktop)
+### 📋 Orders — Light Mode
 
 ![Orders Light Mode](./docs/screenshots/Orders%20%E2%80%93%20Light%20Mode.png)
 
-### Orders – Dark Mode (Desktop)
+### 🌙 Orders — Dark Mode
 
 ![Orders Dark Mode](./docs/screenshots/Orders%20%E2%80%93%20Dark%20Mode.png)
 
+### 📊 Dashboard — Light Mode
+
+![Dashboard Light Mode](./docs/screenshots/Dashboard%20-%20Light%20Mode.png)
+
+### 🌙 Dashboard — Dark Mode
+
+![Dashboard Dark Mode](./docs/screenshots/Dashboard%20-%20Dark%20Mode.png)
+
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js** v18+ and **npm** v9+.
+- **Node.js** v18+ and **npm** v9+
 - A **Salesforce org** with:
-  - Multi-Framework uiBundle support enabled (Agentforce 360 / SF Multi-Framework runtime).
-  - **GraphQL API** enabled (available in orgs with the appropriate feature flag or API version).
-  - Custom objects `Bike__c`, `Bike_Order__c` (and optionally `Bike_Order_Item__c`) created and populated with sample data.
-  - The `Bike_Order_Validate_Submitted` Flow deployed and activated.
-- **Salesforce CLI** (`sf`) installed and authenticated to the target org.
+  - Multi-Framework uiBundle support enabled (Agentforce 360 / SF Multi-Framework runtime)
+  - GraphQL API enabled (appropriate feature flag / API version)
+  - Custom objects `Bike__c`, `Bike_Order__c` created and populated with sample data
+  - `Bike_Order_Validate_Submitted` Flow deployed and activated
+- **Salesforce CLI** (`sf`) installed and authenticated
 
 ### Setup
 
-1. **Clone the repository:**
+```bash
+# 1. Clone the repository
+git clone <repo-url>
+cd <repo-directory>
 
-   ```
-   git clone <repo-url>
-   cd <repo-directory>
-   ```
+# 2. Install dependencies
+npm install
 
-2. **Install dependencies:**
+# 3. Authenticate with your org
+sf org login web --alias my-org
+sf config set target-org my-org
 
-   ```
-   npm install
-   ```
+# 4. Build the uiBundle
+npm run build
 
-3. **Authenticate with Salesforce:**
+# 5. Deploy to Salesforce
+sf project deploy start
+```
 
-   ```
-   sf org login web --alias my-org
-   sf config set target-org my-org
-   ```
-
-   Ensure the authenticated user has access to the relevant custom objects and the GraphQL API.
-
-4. **Build the uiBundle:**
-
-   ```
-   npm run build
-   ```
-
-   This compiles the React app into a deployable uiBundle artifact.
-
-5. **Deploy to Salesforce:**
-
-   ```
-   sf project deploy start
-   ```
-
-   Deploy the uiBundle and any associated metadata (objects, flows, permissions) to the org.
-
-6. **Open the app:**
-   - Via the **App Launcher** inside your Salesforce org, search for the app name.
-   - Or navigate to the configured **Experience Cloud site** where the uiBundle is embedded.
+Then open the app via the **App Launcher** in your org or navigate to the configured **Experience Cloud site**.
 
 ### Iterative Development
 
-For iterative builds during development, run:
-
-```
+```bash
 npm run build -- --watch
 ```
 
-and redeploy as needed. TypeScript type errors are surfaced at build time.
+TypeScript type errors are surfaced at build time. Redeploy with `sf project deploy start` after each build.
 
 ---
 
-## Development & Branching
+## 🔭 Future Work
 
-The project follows a **feature-branch workflow** to keep logical changes isolated and pull requests clean:
+- [ ] **Agentforce Integration** — embed an AI-powered assistant to surface order insights and recommendations
+- [ ] **Advanced Analytics** — charts and trend visualizations on the Orders Dashboard
+- [ ] **Order Line Items** — expand `Bike_Order_Item__c` support with per-product breakdown in the UI
+- [ ] **Experience Cloud** — deploy as a full Experience Cloud site for external B2B buyers
 
-| Branch                               | Purpose                                                                                                                                                                                              |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fix/graphql-order-mutations-uiapi`  | Fixes to the GraphQL mutation pattern, migrating from the legacy `RecordCreateInput` / `recordCreate` approach to the correct `<ObjectApiName>Create` + `<ObjectApiName>CreateInput` UI API pattern. |
-| `feat/app-tailwind-design`           | Full design system implementation: Tailwind config, design tokens, light/dark theme toggle, and responsive layouts.                                                                                  |
-| `feat/orders-dashboard` _(upcoming)_ | Planned analytics and KPI dashboard on top of `Bike_Order__c` data.                                                                                                                                  |
+---
 
-Logic fixes and UI/design refinements are kept in separate branches so that each PR has a clear, reviewable scope.
+## 👨‍💻 Author
+
+**Felipe Eugênio** — Salesforce Developer Jr  
+🇧🇷 São Paulo, Brazil | [LinkedIn](https://www.linkedin.com/in/felipe-de-siqueira-eugenio/) | [Trailhead](https://www.salesforce.com/trailblazer/felipeseugenio)
 
 ---
 
